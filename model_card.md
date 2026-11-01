@@ -2,14 +2,14 @@
 
 ## 1. Model Name  
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+**VibeFinder 1.0**
 
 ---
 
 ## 2. Intended Use  
 
-Describe what your recommender is designed to do and who it is for. 
+It suggests songs for classroom exploration from a stated taste profile. It is not a
+production service or a replacement for a real music platform.
 
 Prompts:  
 
@@ -21,7 +21,9 @@ Prompts:
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+The model gives 2 points for a genre match and 1 point for a mood match. It adds up to
+1 point when energy is close to the user's target and up to 0.5 points for acoustic
+preference. It ranks every song by total score and reports the matching reasons.
 
 Prompts:  
 
@@ -36,7 +38,9 @@ Avoid code here. Pretend you are explaining the idea to a friend who does not pr
 
 ## 4. Data  
 
-Describe the dataset the model uses.  
+The catalog has 10 songs with genre, mood, energy, tempo, valence, danceability, and
+acousticness. It includes pop, lofi, rock, ambient, jazz, synthwave, and indie pop.
+This hand-written dataset is small and does not represent all music.
 
 Prompts:  
 
@@ -49,7 +53,8 @@ Prompts:
 
 ## 5. Strengths  
 
-Where does your system seem to work well  
+It works well when the profile resembles a catalog row, such as happy pop or chill
+lofi. The explanations make it clear why an exact genre and mood match wins.
 
 Prompts:  
 
@@ -61,7 +66,9 @@ Prompts:
 
 ## 6. Limitations and Bias 
 
-Where the system struggles or behaves unfairly. 
+Genre receives the largest single bonus, so it can over-prioritize a genre even when
+another song has a closer energy or mood. Small genres are underrepresented. The model
+has no lyrics, listening history, popularity, artist diversity, or skip data.
 
 Prompts:  
 
@@ -74,7 +81,10 @@ Prompts:
 
 ## 7. Evaluation  
 
-How you checked whether the recommender behaved as expected. 
+I tested High-Energy Pop, Chill Lofi, and Deep Intense Rock. Pop favored Sunrise City
+and Rooftop Lights; lofi favored Midnight Coding and Library Rain; rock favored Storm
+Runner. Genre and mood bonuses shift the top results, while energy orders close
+matches. Doubling the energy weight made high-energy songs rise, but reduced variety.
 
 Prompts:  
 
@@ -89,7 +99,8 @@ No need for numeric metrics unless you created some.
 
 ## 8. Future Work  
 
-Ideas for how you would improve the model next.  
+I would add more songs, learn weights from likes and skips, and add a diversity penalty
+so the top results are not all from one genre or artist.
 
 Prompts:  
 
@@ -109,3 +120,8 @@ Prompts:
 - What you learned about recommender systems  
 - Something unexpected or interesting you discovered  
 - How this changed the way you think about music recommendation apps  
+
+My biggest learning moment was seeing that scoring and ranking are separate jobs. AI
+helped me draft a clean first version, but I double-checked types and output against
+the tests. I was surprised that a few transparent rules could feel like a real vibe
+match. Next I would add collaborative signals and compare several scoring strategies.

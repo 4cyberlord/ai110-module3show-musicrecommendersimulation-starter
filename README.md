@@ -11,13 +11,25 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This version is a CLI-first content-based recommender. It loads a small song catalog,
+compares songs with a user's genre, mood, energy, and acoustic preferences, and prints
+an explained ranking.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+Real platforms combine collaborative filtering (patterns from similar listeners) with
+content-based filtering (song attributes such as genre, mood, tempo, and energy). This
+simulation focuses on content-based matching so the behavior is easy to inspect. A
+genre match is worth 2 points, a mood match is worth 1 point, energy similarity adds
+up to 1 point, and acoustic preference adds up to 0.5 points. Every song is scored,
+sorted highest to lowest, and returned with reasons.
+
+Each song uses title, artist, genre, mood, energy, tempo, valence, danceability, and
+acousticness. The user profile stores a favorite genre, favorite mood, target energy,
+and whether the listener likes acoustic songs. This recipe may over-prioritize genre
+and cannot understand lyrics, context, or a listener's changing mood.
 
 Some prompts to answer:
 
@@ -71,12 +83,15 @@ You can add more tests in `tests/test_recommender.py`.
 Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
 
 ```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
+Loaded songs: 10
+
+High-Energy Pop profile: {'genre': 'pop', 'mood': 'happy', 'energy': 0.8, 'likes_acoustic': False}
+1. Sunrise City by Neon Echo - Score: 4.39
+   Because: genre match (+2.0); mood match (+1.0); energy similarity (+0.98); acoustic preference (+0.41)
+2. Gym Hero by Max Pulse - Score: 3.35
+   Because: genre match (+2.0); energy similarity (+0.87); acoustic preference (+0.47)
+3. Rooftop Lights by Indigo Parade - Score: 2.29
+   Because: genre match (+2.0); energy similarity (+0.87); acoustic preference (+0.47)
 ```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
@@ -85,7 +100,9 @@ Paste a sample of your recommender's output here as a text block so a reader can
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+I tested High-Energy Pop, Chill Lofi, and Deep Intense Rock profiles. Genre and mood
+matches moved to the top, while energy broke ties between similar songs. Doubling the
+energy weight made high-energy songs rise, but reduced variety.
 
 - What happened when you changed the weight on genre from 2.0 to 0.5
 - What happened when you added tempo or valence to the score
@@ -95,7 +112,9 @@ Use this section to document the experiments you ran. For example:
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
+The catalog has only 10 songs, so a profile can quickly run out of strong matches. The
+genre bonus can create a filter bubble and hide a song with a better mood match. The
+model also ignores lyrics, listening history, popularity, artist diversity, and context.
 
 Examples:
 
@@ -113,7 +132,12 @@ Read and complete `model_card.md`:
 
 [**Model Card**](model_card.md)
 
-Write 1 to 2 paragraphs here about what you learned:
+I learned that a recommender is a chain of small decisions: represent preferences,
+score each candidate, rank the scores, and explain the result. Even a tiny weighted
+formula can feel intelligent because the output reflects recognizable musical ideas.
+AI helped me draft and debug the logic, but I verified the CSV types, ranking order,
+and sample output myself. Next I would add feedback from skips and likes, diversity
+controls, and a larger catalog.
 
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
