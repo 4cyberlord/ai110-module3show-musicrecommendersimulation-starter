@@ -1,13 +1,16 @@
-from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
+"""Transparent content-based music ranking."""
+from dataclasses import dataclass, asdict
 import csv
+
+MODES = {
+    "balanced": (2.0, 1.0, 1.0),
+    "genre-first": (3.0, 1.0, 1.0),
+    "mood-first": (1.0, 3.0, 1.0),
+    "energy-focused": (1.0, 1.0, 2.0),
+}
 
 @dataclass
 class Song:
-    """
-    Represents a song and its attributes.
-    Required by tests/test_recommender.py
-    """
     id: int
     title: str
     artist: str
@@ -18,100 +21,100 @@ class Song:
     valence: float
     danceability: float
     acousticness: float
+    popularity: int = 0
+    release_decade: int = 2020
+    mood_tag: str = ""
+    duration_seconds: int = 0
+    language: str = ""
 
 @dataclass
 class UserProfile:
-    """
-    Represents a user's taste preferences.
-    Required by tests/test_recommender.py
-    """
     favorite_genre: str
     favorite_mood: str
     target_energy: float
     likes_acoustic: bool
 
-class Recommender:
-    """
-    OOP implementation of the recommendation logic.
-    Required by tests/test_recommender.py
-    """
-    def __init__(self, songs: List[Song]):
-        self.songs = songs
+    def preferences(self):
+        """Convert the object profile to shared scoring inputs."""
+        return dict(genre=self.favorite_genre, mood=self.favorite_mood,
+                    energy=self.target_energy, likes_acoustic=self.likes_acoustic)
 
-    def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
-        def score(song: Song) -> float:
-            value = 0.0
-            value += 2.0 if song.genre.lower() == user.favorite_genre.lower() else 0.0
-            value += 1.0 if song.mood.lower() == user.favorite_mood.lower() else 0.0
-            value += max(0.0, 1.0 - abs(song.energy - user.target_energy))
-            if user.likes_acoustic:
-                value += song.acousticness
-            else:
-                value += 1.0 - song.acousticness
-            return value
-
-        return sorted(self.songs, key=score, reverse=True)[:k]
-
-    def explain_recommendation(self, user: UserProfile, song: Song) -> str:
-        reasons = []
-        if song.genre.lower() == user.favorite_genre.lower():
-            reasons.append("favorite genre match")
-        if song.mood.lower() == user.favorite_mood.lower():
-            reasons.append("favorite mood match")
-        reasons.append(f"energy is {abs(song.energy - user.target_energy):.2f} from target")
-        if user.likes_acoustic and song.acousticness >= 0.6:
-            reasons.append("acoustic sound")
-        elif not user.likes_acoustic and song.acousticness < 0.6:
-            reasons.append("less acoustic sound")
-        return "; ".join(reasons)
-
-def load_songs(csv_path: str) -> List[Dict]:
-    """
-    Loads songs from a CSV file.
-    Required by src/main.py
-    """
+def load_songs(csv_path):
+    """Read a CSV catalog and convert numeric columns."""
     with open(csv_path, newline="", encoding="utf-8") as file:
         songs = []
         for row in csv.DictReader(file):
-            for field in ("id",):
-                row[field] = int(row[field])
-            for field in ("energy", "tempo_bpm", "valence", "danceability", "acousticness"):
-                row[field] = float(row[field])
+            for key in ("id", "popularity", "release_decade", "duration_seconds"):
+                if key in row:
+                    row[key] = int(row[key])
+            for key in ("energy", "tempo_bpm", "valence", "danceability", "acousticness"):
+                row[key] = float(row[key])
             songs.append(row)
     print(f"Loaded songs: {len(songs)}")
     return songs
 
-def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """
-    Scores a single song against user preferences.
-    Required by recommend_songs() and src/main.py
-    """
-    score = 0.0
+def score_song(user_prefs, song, mode="balanced"):
+    """Return relevance and a complete breakdown of awarded points."""
+    if mode not in MODES:
+        raise ValueError(f"Unknown scoring mode: {mode}")
+    genre, mood, energy = MODES[mode]
     reasons = []
-    if song["genre"].lower() == user_prefs.get("genre", "").lower():
-        score += 2.0
-        reasons.append("genre match (+2.0)")
-    if song["mood"].lower() == user_prefs.get("mood", "").lower():
-        score += 1.0
-        reasons.append("mood match (+1.0)")
-    if "energy" in user_prefs:
-        similarity = max(0.0, 1.0 - abs(song["energy"] - float(user_prefs["energy"])))
-        score += similarity
-        reasons.append(f"energy similarity (+{similarity:.2f})")
+    points = []
+    def award(label, value):
+        points.append(value)
+        reasons.append(f"{label} (+{value:.3f})")
+    for key, weight in (("genre", genre), ("mood", mood),
+                        ("mood_tag", 0.5), ("language", 0.5)):
+        if key in user_prefs and str(song.get(key, "")).casefold() == str(user_prefs[key]).casefold():
+            award(f"{key} match", weight)
+    for key, scale, weight in (("energy", 1, energy), ("popularity", 100, 0.5),
+                               ("release_decade", 50, 0.5), ("duration_seconds", 300, 0.5)):
+        if key in user_prefs and key in song:
+            similarity = max(0.0, 1.0 - abs(float(song[key]) - float(user_prefs[key])) / scale)
+            award(f"{key} similarity", weight * similarity)
     if user_prefs.get("likes_acoustic") is not None:
-        acoustic_match = song["acousticness"] if user_prefs["likes_acoustic"] else 1.0 - song["acousticness"]
-        score += acoustic_match * 0.5
-        reasons.append(f"acoustic preference (+{acoustic_match * 0.5:.2f})")
-    return score, reasons
+        acoustic = song["acousticness"]
+        award("acoustic preference", 0.5 * (acoustic if user_prefs["likes_acoustic"] else 1-acoustic))
+    return sum(points), reasons
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """
-    Functional implementation of the recommendation logic.
-    Required by src/main.py
-    """
-    ranked = []
+def recommend_songs(user_prefs, songs, k=5, mode="balanced", diversity=False):
+    """Rank candidates by relevance, optionally penalizing repeated artists and genres."""
+    if k <= 0:
+        return []
+    candidates = []
     for song in songs:
-        score, reasons = score_song(user_prefs, song)
-        ranked.append((song, score, "; ".join(reasons)))
-    ranked.sort(key=lambda item: item[1], reverse=True)
-    return ranked[:k]
+        score, reasons = score_song(user_prefs, song, mode)
+        candidates.append((song, score, reasons))
+    if not diversity:
+        return [(s, v, "; ".join(r)) for s, v, r in sorted(candidates, key=lambda item: -item[1])[:k]]
+    selected = []
+    artists, genres = {}, {}
+    def penalty(song):
+        return 0.75 * artists.get(song["artist"].casefold(), 0) + 0.25 * genres.get(song["genre"].casefold(), 0)
+    while candidates and len(selected) < k:
+        index = max(range(len(candidates)), key=lambda i: candidates[i][1] - penalty(candidates[i][0]))
+        song, score, reasons = candidates.pop(index)
+        cost = penalty(song)
+        if cost:
+            reasons = reasons + [f"diversity penalty (-{cost:.3f})"]
+        selected.append((song, score-cost, "; ".join(reasons)))
+        artist, genre = song["artist"].casefold(), song["genre"].casefold()
+        artists[artist] = artists.get(artist, 0) + 1
+        genres[genre] = genres.get(genre, 0) + 1
+    return selected
+
+class Recommender:
+    """Object interface backed by the same functional scoring engine."""
+    def __init__(self, songs):
+        self.songs = songs
+
+    def recommend(self, user, k=5, mode="balanced", diversity=False):
+        """Return ranked Song objects without duplicating the scoring formula."""
+        by_id = {song.id: song for song in self.songs}
+        return [by_id[row["id"]] for row, _, _ in recommend_songs(
+            user.preferences(), [asdict(song) for song in self.songs], k, mode, diversity)]
+
+    def explain_recommendation(self, user, song, mode="balanced"):
+        """Explain the shared relevance score."""
+        _, reasons = score_song(user.preferences(), asdict(song), mode)
+        return "; ".join(reasons) or "No matching preferences"
