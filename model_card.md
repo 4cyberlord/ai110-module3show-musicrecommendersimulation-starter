@@ -19,7 +19,7 @@ The logic is transparent, deterministic for a fixed catalog order, and easy to i
 Genre has the largest default bonus and can hide songs with a closer mood or energy. The expanded dataset still gives some genres more candidates than others, creating unequal exposure. Synthetic popularity and language can reinforce biases if used as preferences. Diversity reduces repetition but can demote relevant tracks and is not a guarantee of fairness. The system has no actual listening history, lyrics or user satisfaction measurements.
 
 ## Evaluation
-Independent arithmetic from the committed CSV and formula produced the following expected first choices: High-Energy Pop — Sunrise City (4.390); Chill Lofi — Ocean Lanterns (4.390); Deep Intense Rock — Storm Runner (4.440); conflicting high-energy sad pop — Bittersweet Rush (4.380). Full expected top-five tables with reasons appear in the README. These are reconstructed results, not claimed Python terminal runs.
+Actual Python execution confirmed the independently calculated first choices: High-Energy Pop — Sunrise City (4.390); Chill Lofi — Ocean Lanterns (4.390); Deep Intense Rock — Storm Runner (4.440); conflicting high-energy sad pop — Bittersweet Rush (4.380). Full top-five tables with reasons in the README were checked against captured Python output.
 
 Sunrise City wins because it matches genre and happy mood, has energy only 0.02 away from the target, and adds 0.41 for low acousticness. Ocean Lanterns narrowly beats Library Rain because its energy is closer to the target despite being slightly less acoustic.
 
@@ -32,7 +32,7 @@ The conflicting profile requests sad mood with 0.9 energy. Bittersweet Rush sati
 
 Weight experiment: halve genre from 2 to 1 and double energy from 1 to 2. For pop, Sunrise City remains first (4.370), Accra Sunrise rises from fourth to second (3.340), Rooftop Lights from fifth to third (3.245), and Gym Hero drops from second to fifth (3.215). The change broadens exposure across genres, but without real feedback it cannot establish greater accuracy.
 
-Regression tests cover data, scores, ranking, modes, optional features, diversity and the shared engine. The tests are committed; Python execution is not claimed.
+Regression tests cover data, scores, ranking, modes, optional features, diversity and the shared engine. All 14 pytest cases passed; 40 additional runtime scenarios passed across five profiles, four modes and both diversity settings. See VALIDATION.md.
 
 ## Intended Use and Non-Intended Use
 Designed for classroom demonstrations of weighted ranking, explanations and bias. Not designed for production music services, commercial decisions, psychological profiling or predictions of actual listener satisfaction.
