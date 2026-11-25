@@ -43,7 +43,7 @@ Modes (genre, mood, energy): balanced (2,1,1), genre-first (3,1,1), mood-first (
 
 ## Sample Recommendation Output
 
-The following are independently reconstructed expected table outputs from the committed CSV and scoring formula, not captured Python terminal output. Loaded songs: 20. Balanced mode; diversity off. Display rounding may differ at exact half-thousandths across runtimes.
+The following tables match the actual Python output captured in an isolated notebook runtime from hash-verified source and data at commit 70ee38d. Loaded songs: 20. Balanced mode; diversity off.
 
 ### High-Energy Pop
 
@@ -107,7 +107,11 @@ Rank | Song             | Artist        | Score | Reasons
 5    | Gym Hero         | Max Pulse     | 3.215 | genre match (+1.000); energy similarity (+1.740); acoustic preference (+0.475)
 ```
 
-Compare the balanced table above with the energy-focused table. This is an independent numerical reconstruction; use the experiment option to reproduce the actual Python output locally. See [model card](model_card.md) for interpretation, limitations and comparisons.
+Compare the balanced table above with the energy-focused table. This table was verified against actual Python output; use the experiment option to reproduce it. See [model card](model_card.md) for interpretation, limitations and comparisons.
+
+## Runtime Verification
+
+14 pytest cases passed (0.10 seconds, exit code 0). A further 40 runtime scenarios passed across five profiles, four modes and both diversity settings. See [validation report](VALIDATION.md) for scope and evidence.
 
 ## Limitations and Risks
 
