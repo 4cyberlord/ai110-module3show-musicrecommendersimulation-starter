@@ -1,43 +1,17 @@
 # AI Interactions Log
 
-> **Stretch features only.** Only fill in the sections that apply to stretch features you attempted. If you did not attempt a stretch feature, leave its section blank or delete it. This file is not required for the core project.
-
----
-
 ## Agentic Workflow (SF8)
+Actual user requests: audit the repository against the assignment without CLI validation; then complete all required and optional work directly on main, keep a TODO, and commit completed changes.
 
-> Document your experience using an AI agent (e.g., Cursor Agent, Claude, Copilot) to make multi-step changes autonomously.
+The assistant inspected the repository and identified a missing dataset expansion, duplicated scoring, incorrect explanations, missing evaluation evidence and unimplemented stretch challenges. It added ten synthetic tracks and five advanced fields (popularity, release decade, mood tag, duration, language), updated scoring, added strategy modes, diversity and formatted tables, expanded tests and rewrote documentation.
 
-**What task did you give the agent?**
-
-<!-- Describe the goal you asked the agent to accomplish -->
-
-**Prompts used:**
-
-<!-- Paste the key prompts you gave the agent -->
-
-**What did the agent generate or change?**
-
-<!-- List the files edited, code generated, or commands run -->
-
-**What did you verify or fix manually?**
-
-<!-- Describe anything the agent got wrong or that required human review -->
-
----
+Manual verification by the assistant: read the CSV and source through GitHub; independently recalculated all four baseline top-five lists and the weight experiment using arithmetic outside the Python CLI. The expanded catalog changed the expected lofi winner from Library Rain to Ocean Lanterns, so the regression assertion was corrected. No Python test execution or student manual verification is claimed.
 
 ## Design Pattern (SF10)
+A lightweight Strategy pattern uses a mapping of mode names to genre, mood and energy weights. A single score_song function selects those weights; both the functional and object interfaces delegate to it. This avoids maintaining separate formulas. The AI proposed this design while implementing the requested extensions; no separate brainstorming chat is claimed.
 
-> Document how AI helped you choose or implement a design pattern.
+## Diversity and presentation
+The assistant implemented greedy artist and genre penalties and an aligned text table with score explanations. A regression test specifies that a different artist should rank ahead of a repeated artist when base relevance is equal.
 
-**Which design pattern did you use?**
-
-<!-- e.g., Strategy, Factory, Observer, etc. -->
-
-**How did AI help you brainstorm or implement it?**
-
-<!-- Describe the conversation or suggestions that led to your decision -->
-
-**How does the pattern appear in your final code?**
-
-<!-- Point to the relevant class or method -->
+## Validation scope
+Independent calculations and source review are distinct from executing the Python tests. The student should review the reflection and capture actual Python output locally to satisfy the assignment's execution requirement.
