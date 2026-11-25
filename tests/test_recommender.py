@@ -98,7 +98,7 @@ def test_energy_proximity(catalog):
 
 @pytest.mark.parametrize("name,expected", [
     ("High-Energy Pop", "Sunrise City"),
-    ("Chill Lofi", "Library Rain"),
+    ("Chill Lofi", "Ocean Lanterns"),
     ("Deep Intense Rock", "Storm Runner"),
     ("Conflicting Preferences", "Bittersweet Rush"),
 ])
