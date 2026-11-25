@@ -7,7 +7,7 @@
 - [x] Document independently reconstructed profile outputs, pairwise comparisons, experiment and model limitations.
 - [x] Document actual AI workflow and manual review; record validation scope.
 - [x] Independently recalculate baseline and experimental rankings without CLI.
-- [ ] Execute committed Python tests locally and capture actual terminal output for all profiles and experiment (not performed in the no-CLI audit).
+- [x] Execute hash-verified Python tests and capture actual program stdout for all profiles and the experiment in an isolated notebook (14 pytest cases and 40 additional scenarios passed). See [VALIDATION.md](VALIDATION.md).
 - [ ] Student review and personalize the reflection; confirm personal learning activities.
 
-All four optional challenges are implemented. Source review and independent arithmetic do not constitute a Python runtime test.
+All four optional challenges are implemented and runtime-tested. The remaining item concerns the student's personal reflection and learning activities, not an outstanding software test.
