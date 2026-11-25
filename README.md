@@ -1,146 +1,120 @@
-# 🎵 Music Recommender Simulation
+# VibeFinder 1.0 — Music Recommender Simulation
 
-## Project Summary
-
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-This version is a CLI-first content-based recommender. It loads a small song catalog,
-compares songs with a user's genre, mood, energy, and acoustic preferences, and prints
-an explained ranking.
-
----
+A CLI-first educational content-based music recommender with transparent scores.
 
 ## How The System Works
 
-Real platforms combine collaborative filtering (patterns from similar listeners) with
-content-based filtering (song attributes such as genre, mood, tempo, and energy). This
-simulation focuses on content-based matching so the behavior is easy to inspect. A
-genre match is worth 2 points, a mood match is worth 1 point, energy similarity adds
-up to 1 point, and acoustic preference adds up to 0.5 points. Every song is scored,
-sorted highest to lowest, and returned with reasons.
+Spotify and YouTube can combine collaborative filtering (patterns in similar users' likes, skips, playlists and viewing history) with content-based filtering (song genre, tempo, mood and energy). This simulation uses only content-based filtering: it does not learn from other listeners. Energy proximity is more useful than simply rewarding high energy because a chill listener wants a low target. Genre and mood describe taste, while acousticness helps distinguish sound texture.
 
-Each song uses title, artist, genre, mood, energy, tempo, valence, danceability, and
-acousticness. The user profile stores a favorite genre, favorite mood, target energy,
-and whether the listener likes acoustic songs. This recipe may over-prioritize genre
-and cannot understand lyrics, context, or a listener's changing mood.
+Song fields: ID, title, artist, genre, mood, energy, tempo, valence, danceability, acousticness, popularity, release decade, mood tag, duration and language. All 20 rows are synthetic; the last ten broaden the catalog. UserProfile stores favorite genre, favorite mood, target energy and acoustic preference. Dictionary profiles can additionally specify all five advanced features.
 
-Some prompts to answer:
+Algorithm recipe: exact genre +2, exact mood +1, energy similarity max(0, 1 - absolute energy gap), acoustic preference +0.5 times acousticness (or its complement). Optional advanced preferences each contribute up to 0.5: exact mood tag and language, and proximity for popularity (scale 100), release decade (50 years), duration (300 seconds). Missing preferences add no points. Tempo, valence and danceability are descriptive only. Default core maximum is 4.5; all advanced preferences can raise it to 7.0.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+```mermaid
+flowchart LR
+ A[User preferences] --> C[Score each song]
+ B[CSV catalog] --> C
+ C --> D[Sort or diversity rerank]
+ D --> E[Top K with reasons]
+```
 
-You can include a simple diagram or bullet list if helpful.
-
----
+Scoring judges one candidate; ranking compares all candidates. Python sorted returns a new list, while list.sort mutates its list. Genre dominance can create a filter bubble.
 
 ## Getting Started
 
-### Setup
-
-1. Create a virtual environment (optional but recommended):
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
-
-2. Install dependencies
+From the repository root, use Python 3.9 or newer.
 
 ```bash
+python -m venv .venv
 pip install -r requirements.txt
-```
-
-3. Run the app:
-
-```bash
 python -m src.main
 ```
 
-### Running Tests
-
-Run the starter tests with:
+Activate the virtual environment first if using one (macOS/Linux: source .venv/bin/activate; Windows: .venv\Scripts\activate).
 
 ```bash
-pytest
+python -m src.main --profile "High-Energy Pop" --mode mood-first
+python -m src.main --profile Advanced --diversity
+python -m src.main --profile "High-Energy Pop" --experiment
+python -m pytest
 ```
 
-You can add more tests in `tests/test_recommender.py`.
-
----
+Modes (genre, mood, energy): balanced (2,1,1), genre-first (3,1,1), mood-first (1,3,1), energy-focused (1,1,2). Diversity greedily subtracts 0.75 per previously selected same artist and 0.25 per same genre; this is a soft penalty, not a hard cap. Tables show adjusted scores and reasons.
 
 ## Sample Recommendation Output
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
+The following are independently reconstructed expected table outputs from the committed CSV and scoring formula, not captured Python terminal output. Loaded songs: 20. Balanced mode; diversity off. Display rounding may differ at exact half-thousandths across runtimes.
 
+### High-Energy Pop
+
+```text
+Rank | Song             | Artist        | Score | Reasons
+-----+------------------+---------------+-------+----------------------------------------------------------------------------------------------------
+1    | Sunrise City     | Neon Echo     | 4.390 | genre match (+2.000); mood match (+1.000); energy similarity (+0.980); acoustic preference (+0.410)
+2    | Gym Hero         | Max Pulse     | 3.345 | genre match (+2.000); energy similarity (+0.870); acoustic preference (+0.475)
+3    | Bittersweet Rush | Neon Echo     | 3.320 | genre match (+2.000); energy similarity (+0.920); acoustic preference (+0.400)
+4    | Accra Sunrise    | Kora Wave     | 2.390 | mood match (+1.000); energy similarity (+0.950); acoustic preference (+0.440)
+5    | Rooftop Lights   | Indigo Parade | 2.285 | mood match (+1.000); energy similarity (+0.960); acoustic preference (+0.325)
 ```
-Loaded songs: 10
 
-High-Energy Pop profile: {'genre': 'pop', 'mood': 'happy', 'energy': 0.8, 'likes_acoustic': False}
-1. Sunrise City by Neon Echo - Score: 4.39
-   Because: genre match (+2.0); mood match (+1.0); energy similarity (+0.98); acoustic preference (+0.41)
-2. Gym Hero by Max Pulse - Score: 3.35
-   Because: genre match (+2.0); energy similarity (+0.87); acoustic preference (+0.47)
-3. Rooftop Lights by Indigo Parade - Score: 2.29
-   Because: genre match (+2.0); energy similarity (+0.87); acoustic preference (+0.47)
+### Chill Lofi
+
+```text
+Rank | Song               | Artist         | Score | Reasons
+-----+--------------------+----------------+-------+----------------------------------------------------------------------------------------------------
+1    | Ocean Lanterns     | LoRoom         | 4.390 | genre match (+2.000); mood match (+1.000); energy similarity (+0.980); acoustic preference (+0.410)
+2    | Library Rain       | Paper Lanterns | 4.380 | genre match (+2.000); mood match (+1.000); energy similarity (+0.950); acoustic preference (+0.430)
+3    | Midnight Coding    | LoRoom         | 4.335 | genre match (+2.000); mood match (+1.000); energy similarity (+0.980); acoustic preference (+0.355)
+4    | Focus Flow         | LoRoom         | 3.390 | genre match (+2.000); energy similarity (+1.000); acoustic preference (+0.390)
+5    | Spacewalk Thoughts | Orbit Bloom    | 2.340 | mood match (+1.000); energy similarity (+0.880); acoustic preference (+0.460)
 ```
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
+### Deep Intense Rock
 
----
+```text
+Rank | Song             | Artist     | Score | Reasons
+-----+------------------+------------+-------+----------------------------------------------------------------------------------------------------
+1    | Storm Runner     | Voltline   | 4.440 | genre match (+2.000); mood match (+1.000); energy similarity (+0.990); acoustic preference (+0.450)
+2    | Gym Hero         | Max Pulse  | 2.445 | mood match (+1.000); energy similarity (+0.970); acoustic preference (+0.475)
+3    | Electric Horizon | Prism Sky  | 1.425 | energy similarity (+0.940); acoustic preference (+0.485)
+4    | Velvet Thunder   | Iron Coast | 1.410 | energy similarity (+0.920); acoustic preference (+0.490)
+5    | Accra Sunrise    | Kora Wave  | 1.390 | energy similarity (+0.950); acoustic preference (+0.440)
+```
+
+### Conflicting Preferences
+
+```text
+Rank | Song             | Artist    | Score | Reasons
+-----+------------------+-----------+-------+----------------------------------------------------------------------------------------------------
+1    | Bittersweet Rush | Neon Echo | 4.380 | genre match (+2.000); mood match (+1.000); energy similarity (+0.980); acoustic preference (+0.400)
+2    | Gym Hero         | Max Pulse | 3.445 | genre match (+2.000); energy similarity (+0.970); acoustic preference (+0.475)
+3    | Sunrise City     | Neon Echo | 3.330 | genre match (+2.000); energy similarity (+0.920); acoustic preference (+0.410)
+4    | Quiet Letters    | June Keys | 1.500 | mood match (+1.000); energy similarity (+0.400); acoustic preference (+0.100)
+5    | Storm Runner     | Voltline  | 1.440 | energy similarity (+0.990); acoustic preference (+0.450)
+```
 
 ## Experiments You Tried
 
-I tested High-Energy Pop, Chill Lofi, and Deep Intense Rock profiles. Genre and mood
-matches moved to the top, while energy broke ties between similar songs. Doubling the
-energy weight made high-energy songs rise, but reduced variety.
+Halve genre weight and double energy weight for High-Energy Pop:
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+```text
+Rank | Song             | Artist        | Score | Reasons
+-----+------------------+---------------+-------+----------------------------------------------------------------------------------------------------
+1    | Sunrise City     | Neon Echo     | 4.370 | genre match (+1.000); mood match (+1.000); energy similarity (+1.960); acoustic preference (+0.410)
+2    | Accra Sunrise    | Kora Wave     | 3.340 | mood match (+1.000); energy similarity (+1.900); acoustic preference (+0.440)
+3    | Rooftop Lights   | Indigo Parade | 3.245 | mood match (+1.000); energy similarity (+1.920); acoustic preference (+0.325)
+4    | Bittersweet Rush | Neon Echo     | 3.240 | genre match (+1.000); energy similarity (+1.840); acoustic preference (+0.400)
+5    | Gym Hero         | Max Pulse     | 3.215 | genre match (+1.000); energy similarity (+1.740); acoustic preference (+0.475)
+```
 
----
+Compare the balanced table above with the energy-focused table. This is an independent numerical reconstruction; use the experiment option to reproduce the actual Python output locally. See [model card](model_card.md) for interpretation, limitations and comparisons.
 
 ## Limitations and Risks
 
-The catalog has only 10 songs, so a profile can quickly run out of strong matches. The
-genre bonus can create a filter bubble and hide a song with a better mood match. The
-model also ignores lyrics, listening history, popularity, artist diversity, and context.
-
-Examples:
-
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
-
----
+Synthetic metadata is not measured listening behavior. Genre can dominate, and rare genres have fewer candidates. The system does not infer preferences from lyrics or listening history. Popularity and language preferences can amplify representation bias. Diversity trades some relevance for exposure.
 
 ## Reflection
 
-Read and complete `model_card.md`:
+Scoring and ranking are separate decisions. Transparent reasons help explain why a track wins, but a plausible score is not proof of real listener satisfaction. AI helped draft and review the implementation; independently checking arithmetic catches errors in generated explanations. Future work: feedback from likes/skips, a larger real catalog, and listener evaluation.
 
-[**Model Card**](model_card.md)
-
-I learned that a recommender is a chain of small decisions: represent preferences,
-score each candidate, rank the scores, and explain the result. Even a tiny weighted
-formula can feel intelligent because the output reflects recognizable musical ideas.
-AI helped me draft and debug the logic, but I verified the CSV types, ranking order,
-and sample output myself. Next I would add feedback from skips and likes, diversity
-controls, and a larger catalog.
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-
-
+See [AI interactions](ai_interactions.md) and [completion checklist](TODO.md).
